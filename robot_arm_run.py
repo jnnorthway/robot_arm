@@ -29,12 +29,12 @@ def do_move(robot, values):
     wrist_val = float(values.get("wrist", None))
     wrist_rot_val = float(values.get("wrist_rotation", None))
     claw_val = float(values.get("claw", None))
-    robot.base.move(base_val, speed=9)
-    robot.shoulder.move(shoulder_val, speed=9)
-    robot.elbow.move(elbow_val, speed=9)
-    robot.wrist.move(wrist_val, speed=9)
-    robot.wrist_rotate.move(wrist_rot_val, speed=9)
-    robot.claw.move(claw_val, speed=9)
+    robot.base.move(base_val, speed=10)
+    robot.shoulder.move(shoulder_val, speed=10)
+    robot.elbow.move(elbow_val, speed=10)
+    robot.wrist.move(wrist_val, speed=10)
+    robot.wrist_rotate.move(wrist_rot_val, speed=10)
+    robot.claw.move(claw_val, speed=10)
 
 
 def run():
