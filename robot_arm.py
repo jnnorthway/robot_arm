@@ -2,7 +2,7 @@ import os
 import time
 
 
-if os.uname().nodename == "rasberrypi":
+if os.uname().nodename == "raspberrypi":
     from adafruit_servokit import ServoKit
 else:
     from dummy_servo import ServoKit
