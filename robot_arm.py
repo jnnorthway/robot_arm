@@ -1,5 +1,12 @@
+"""Class to control robot arm."""
 import os
 import time
+import logging
+import PySimpleGUI as sg
+
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
 
 if os.uname().nodename == "raspberrypi":
@@ -9,24 +16,46 @@ else:
 
 
 class Joint:
+    """Robot arm joint."""
 
-    def __init__(self, servo, min=0, max=180):
+    def __init__(self, servo, init=90, min=0, max=180):
+        """Robot arm joint init.
+
+        servo (adafruit_motor.servo.Servo): Servo class for robot arm joint
+        init (int): Initial angle for servo to be set to
+        min (int): Minimum angle that servo can reach
+        max (int): Maximum angle that servo can reach
+        """
         self.servo = servo
+        self.init = init
+        self.servo.angle = self.init
         self.min = min
         self.max = max
     
     @property
     def angle(self):
+        """Get servo's current angle."""
         return self.servo.angle
     
     @angle.setter
     def angle(self, new_angle):
+        """Set servo's current angle.
+
+        new_angle (float): Angle for servo to be set to
+        """
+        # check if angle is out of range for joint
+        if new_angle < self.min:
+            new_angle = self.min
+        if new_angle > self.max:
+            new_angle = self.max
         self.servo.angle = new_angle
 
 
 class RobotArm:
+    """Robot arm class."""
 
     def __init__(self):
+        """Initialize robot arm."""
         self.kit = ServoKit(channels=16)
         self.servo = self.kit.servo
         self.base = Joint(self.servo[0])
@@ -39,18 +68,34 @@ class RobotArm:
         self._valid_diff = 0.5
     
     def move(self, joint, angle, speed=10):
-        print(f"Moving {joint} from {joint.angle} to {angle} with speed {speed}")
+        """Move robot arm joint.
+
+        joint (Joint): Joint to move
+        angle (float): Angle to move joint to
+        speed (int): Speed to move joint at (range 1-10)
+        """
+        # handle speed out of range
+        if speed > 10:
+            logging.warning("speed must be in range 1 - 10")
+            speed = 10
+        if speed < 1:
+            logging.warning("speed must be in range 1 - 10")
+            speed = 1
+        logging.info(f"Moving {joint} from {joint.angle} to {angle} with speed {speed}")
+        # check if angle is out of range for joint
         if angle < joint.min:
-            print("Min angle selected")
+            logging.warning(f"Angle less than min selected, min: {joint.min}, angle: {angle}")
             angle = joint.min
         if angle > joint.max:
-            print("Max angle selected")
+            logging.warning(f"Angle greater than max selected, max: {joint.max}, angle: {angle}")
             angle = joint.max
+        # speed of 10 should move instantly
         if speed == 10:
             joint.angle = angle
             return
+        # increment angle over period of time
         while joint.angle != angle:
-            print(f"current angle: {joint.angle}")
+            logging.debug(f"current angle: {joint.angle}")
             if abs(joint.angle - angle) < self._valid_diff:
                 joint.angle = angle
                 break
@@ -58,4 +103,4 @@ class RobotArm:
                 joint.angle -= self._increment_angle
             else:
                 joint.angle += self._increment_angle
-            time.sleep(0.2/speed)
+            time.sleep(0.1/speed)
