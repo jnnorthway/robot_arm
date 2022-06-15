@@ -1,17 +1,63 @@
 """Script to run robot arm."""
+from email.mime import base
 from robot_arm import RobotArm
 import logging
+import PySimpleGUI as sg
+
+
+def get_col(name, joint):
+    joint_name = name.lower().replace(" ", "_")
+    return sg.Column(
+        [
+            [sg.Push(), sg.Text(name), sg.Push()],
+            [sg.Push(), sg.Slider((joint.min, joint.max), orientation="h", default_value=joint.angle, key=joint_name, enable_events=True), sg.Push()],
+        ]
+    )
+
+
+def do_move(robot, values):
+    base_val = values.get("base", None)
+    shoulder_val = values.get("shoulder", None)
+    elbow_val = values.get("elbow", None)
+    wrist_val = values.get("wrist", None)
+    wrist_rot_val = values.get("wrist_rotation", None)
+    claw_val = values.get("claw", None)
+    robot.base.move(base_val, speed=9)
+    robot.shoulder.move(shoulder_val, speed=9)
+    robot.elbow.move(elbow_val, speed=9)
+    robot.wrist.move(wrist_val, speed=9)
+    robot.wrist_rotate.move(wrist_rot_val, speed=9)
+    robot.claw.move(claw_val, speed=9)
 
 
 def run():
     """Run robot arm"""
     logging.info("Running Robot Arm!")
     robot = RobotArm()
-    logging.info(f"Base angle = {robot.claw.angle}")
-    robot.move(robot.claw, 180, 9)
-    logging.info(f"Base angle = {robot.claw.angle}")
-    robot.move(robot.claw, 45, 9)
-    logging.info(f"Base angle = {robot.claw.angle}")
+    base_col = get_col("Base", robot.base)
+    shoulder_col = get_col("Shoulder", robot.shoulder)
+    elbow_col = get_col("Elbow", robot.elbow)
+    wrist_col = get_col("Wrist", robot.wrist)
+    wrist_rot_col = get_col("Wrist Rotation", robot.wrist_rotate)
+    claw = get_col("Claw", robot.claw)
+
+    base_col.AddRow(wrist_col)
+    shoulder_col.AddRow(wrist_rot_col)
+    elbow_col.AddRow(claw)
+
+    layout = [
+        [sg.Push(), sg.Text("Robot Arm Controller"), sg.Push()],
+        [sg.Push(), base_col, shoulder_col, elbow_col, sg.Push()],
+    ]
+    window = sg.Window("Robot Arm Controller", layout)
+    while True:
+        event, values = window.read()
+        logging.debug(f"event: {event}, values {values}")
+        if event == sg.WINDOW_CLOSED:
+            break
+        do_move(robot, values)
+
+    window.close()
 
 
 if __name__ == "__main__":
