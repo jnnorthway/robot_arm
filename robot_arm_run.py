@@ -2,26 +2,33 @@
 from email.mime import base
 from robot_arm import RobotArm
 import logging
-import PySimpleGUI as sg
+import PySimpleGUIWeb as sg 
+# import PySimpleGUI as sg
 
 
 def get_col(name, joint):
     joint_name = name.lower().replace(" ", "_")
+    # return sg.Column(
+    #     [
+    #         [sg.Push(), sg.Text(name), sg.Push()],
+    #         [sg.Push(), sg.Slider((joint.min, joint.max), orientation="h", default_value=joint.angle, key=joint_name, enable_events=True), sg.Push()],
+    #     ]
+    # )
     return sg.Column(
         [
-            [sg.Push(), sg.Text(name), sg.Push()],
-            [sg.Push(), sg.Slider((joint.min, joint.max), orientation="h", default_value=joint.angle, key=joint_name, enable_events=True), sg.Push()],
+            [sg.Text(name)],
+            [sg.Slider((joint.min, joint.max), orientation="h", default_value=joint.angle, key=joint_name, enable_events=True)],
         ]
     )
 
 
 def do_move(robot, values):
-    base_val = values.get("base", None)
-    shoulder_val = values.get("shoulder", None)
-    elbow_val = values.get("elbow", None)
-    wrist_val = values.get("wrist", None)
-    wrist_rot_val = values.get("wrist_rotation", None)
-    claw_val = values.get("claw", None)
+    base_val = float(values.get("base", None))
+    shoulder_val = float(values.get("shoulder", None))
+    elbow_val = float(values.get("elbow", None))
+    wrist_val = float(values.get("wrist", None))
+    wrist_rot_val = float(values.get("wrist_rotation", None))
+    claw_val = float(values.get("claw", None))
     robot.base.move(base_val, speed=9)
     robot.shoulder.move(shoulder_val, speed=9)
     robot.elbow.move(elbow_val, speed=9)
@@ -45,9 +52,13 @@ def run():
     shoulder_col.AddRow(wrist_rot_col)
     elbow_col.AddRow(claw)
 
+    # layout = [
+    #     [sg.Push(), sg.Text("Robot Arm Controller"), sg.Push()],
+    #     [sg.Push(), base_col, shoulder_col, elbow_col, sg.Push()],
+    # ]
     layout = [
-        [sg.Push(), sg.Text("Robot Arm Controller"), sg.Push()],
-        [sg.Push(), base_col, shoulder_col, elbow_col, sg.Push()],
+        [sg.Text("Robot Arm Controller")],
+        [base_col, shoulder_col, elbow_col],
     ]
     window = sg.Window("Robot Arm Controller", layout)
     while True:
