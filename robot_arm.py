@@ -88,7 +88,7 @@ class Joint:
                 self.angle -= self._increment_angle
             else:
                 self.angle += self._increment_angle
-            time.sleep(0.1/speed)
+            time.sleep(0.05/speed)
 
 
 class RobotArm:

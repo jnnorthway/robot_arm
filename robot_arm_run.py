@@ -29,12 +29,12 @@ def do_move(robot, values):
     wrist_val = float(values.get("wrist", None))
     wrist_rot_val = float(values.get("wrist_rotation", None))
     claw_val = float(values.get("claw", None))
-    robot.base.move(base_val, speed=10)
-    robot.shoulder.move(shoulder_val, speed=10)
-    robot.elbow.move(elbow_val, speed=10)
-    robot.wrist.move(wrist_val, speed=10)
-    robot.wrist_rotate.move(wrist_rot_val, speed=10)
-    robot.claw.move(claw_val, speed=10)
+    robot.base.move(base_val, speed=9)
+    robot.shoulder.move(shoulder_val, speed=9)
+    robot.elbow.move(elbow_val, speed=9)
+    robot.wrist.move(wrist_val, speed=9)
+    robot.wrist_rotate.move(wrist_rot_val, speed=9)
+    robot.claw.move(claw_val, speed=9)
 
 
 def run():
@@ -60,13 +60,18 @@ def run():
         [sg.Text("Robot Arm Controller")],
         [base_col, shoulder_col, elbow_col],
     ]
-    window = sg.Window("Robot Arm Controller", layout)
+    window = sg.Window("Robot Arm Controller", layout, web_port=30000)
     while True:
-        event, values = window.read()
-        logging.debug(f"event: {event}, values {values}")
-        if event == sg.WINDOW_CLOSED:
+        try:
+            event, values = window.read()
+            logging.debug(f"event: {event}, values {values}")
+            if event == sg.WINDOW_CLOSED:
+                break
+            do_move(robot, values)
+        except KeyboardInterrupt:
             break
-        do_move(robot, values)
+        except Exception as e:
+            logging.error(f"Failed to read event: {e}")
 
     window.close()
 
