@@ -33,7 +33,7 @@ class Joint:
         self.max = max
         self._increment_angle = 1
         self._valid_diff = 0.5
-        self.servo.angle = self.sleep()
+        self.servo.angle = self.init_angle
     
     @property
     def angle(self):
@@ -61,7 +61,7 @@ class Joint:
         """
         if abs(self.angle - angle) < self._valid_diff:
             return
-        if not speed:
+        if speed is None:
             speed = self.speed
         # handle speed out of range
         if speed > 10:
@@ -125,5 +125,5 @@ class RobotArm:
         """Returns robot arm to initial position."""
         for joint in self.joints.values():
             joint.sleep()
-        
+
 
