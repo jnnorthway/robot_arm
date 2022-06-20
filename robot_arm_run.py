@@ -1,19 +1,12 @@
 """Script to run robot arm."""
-from email.mime import base
 from robot_arm import RobotArm
 import logging
-import PySimpleGUIWeb as sg 
-# import PySimpleGUI as sg
+import PySimpleGUIWeb as sg
 
 
-def get_col(name, joint):
+def get_joint_col(name, joint):
+    """Create column for joint control."""
     joint_name = name.lower().replace(" ", "_")
-    # return sg.Column(
-    #     [
-    #         [sg.Push(), sg.Text(name), sg.Push()],
-    #         [sg.Push(), sg.Slider((joint.min, joint.max), orientation="h", default_value=joint.angle, key=joint_name, enable_events=True), sg.Push()],
-    #     ]
-    # )
     return sg.Column(
         [
             [sg.Text(name)],
@@ -23,6 +16,7 @@ def get_col(name, joint):
 
 
 def do_move(robot, values):
+    """Move joint based on dictionary values."""
     base_val = float(values.get("base", None))
     shoulder_val = float(values.get("shoulder", None))
     elbow_val = float(values.get("elbow", None))
@@ -41,21 +35,17 @@ def run():
     """Run robot arm"""
     logging.info("Running Robot Arm!")
     robot = RobotArm()
-    base_col = get_col("Base", robot.base)
-    shoulder_col = get_col("Shoulder", robot.shoulder)
-    elbow_col = get_col("Elbow", robot.elbow)
-    wrist_col = get_col("Wrist", robot.wrist)
-    wrist_rot_col = get_col("Wrist Rotation", robot.wrist_rotate)
-    claw = get_col("Claw", robot.claw)
+    base_col = get_joint_col("Base", robot.base)
+    shoulder_col = get_joint_col("Shoulder", robot.shoulder)
+    elbow_col = get_joint_col("Elbow", robot.elbow)
+    wrist_col = get_joint_col("Wrist", robot.wrist)
+    wrist_rot_col = get_joint_col("Wrist Rotation", robot.wrist_rotate)
+    claw = get_joint_col("Claw", robot.claw)
 
     base_col.AddRow(wrist_col)
     shoulder_col.AddRow(wrist_rot_col)
     elbow_col.AddRow(claw)
 
-    # layout = [
-    #     [sg.Push(), sg.Text("Robot Arm Controller"), sg.Push()],
-    #     [sg.Push(), base_col, shoulder_col, elbow_col, sg.Push()],
-    # ]
     layout = [
         [sg.Text("Robot Arm Controller")],
         [base_col, shoulder_col, elbow_col],
