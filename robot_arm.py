@@ -2,6 +2,7 @@
 import os
 import time
 import logging
+from threading import Thread
 
 
 logging.basicConfig()
@@ -52,6 +53,19 @@ class Joint:
         if new_angle > self.max:
             new_angle = self.max
         self.servo.angle = new_angle
+    
+    def speed_move(self, angle, speed):
+        # increment angle over period of time
+        while self.angle != angle:
+            logging.debug(f"current angle: {self.angle}")
+            if abs(self.angle - angle) < self._valid_diff:
+                self.angle = angle
+                break
+            if self.angle > angle:
+                self.angle -= self._increment_angle
+            else:
+                self.angle += self._increment_angle
+            time.sleep(0.005/speed)
 
     def move(self, angle, speed=None):
         """Move robot arm joint.
@@ -82,18 +96,8 @@ class Joint:
         if speed == 10:
             self.angle = angle
             return
-        # increment angle over period of time
-        while self.angle != angle:
-            logging.debug(f"current angle: {self.angle}")
-            if abs(self.angle - angle) < self._valid_diff:
-                self.angle = angle
-                break
-            if self.angle > angle:
-                self.angle -= self._increment_angle
-            else:
-                self.angle += self._increment_angle
-            time.sleep(0.005/speed)
-    
+        Thread(target=self.speed_move, args=(angle,speed,)).start()
+
     def sleep(self):
         """Returns joint to initial position."""
         self.move(self.init_angle)
@@ -106,12 +110,12 @@ class RobotArm:
         """Initialize robot arm."""
         self.kit = ServoKit(channels=16)
         self.servo = self.kit.servo
-        self.base = Joint(self.servo[0], speed)
-        self.shoulder = Joint(self.servo[1], speed, max=90)
-        self.elbow = Joint(self.servo[2], speed)
-        self.wrist = Joint(self.servo[3], speed)
-        self.claw = Joint(self.servo[4], speed, min=90)
-        self.wrist_rotate = Joint(self.servo[5], speed)
+        self.base = Joint(self.servo[0], speed, init_angle=90)
+        self.shoulder = Joint(self.servo[1], speed, init_angle=90, max=90)
+        self.elbow = Joint(self.servo[2], speed, init_angle=180)
+        self.wrist = Joint(self.servo[3], speed, init_angle=180) # Flip rotation
+        self.claw = Joint(self.servo[4], speed, init_angle=90, min=90)
+        self.wrist_rotate = Joint(self.servo[5], speed, init_angle=0)
         self.joints = {
             "base": self.base,
             "shoulder": self.shoulder,
@@ -123,6 +127,7 @@ class RobotArm:
     
     def sleep(self):
         """Returns robot arm to initial position."""
+        logging.info("Setting robot into sleep position")
         for joint in self.joints.values():
             joint.sleep()
 
