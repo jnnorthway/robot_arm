@@ -32,7 +32,7 @@ class Joint:
         self.speed = speed
         self.min = min
         self.max = max
-        self._increment_angle = 1
+        self._increment_angle = 3
         self._valid_diff = 0.5
         self.servo.angle = self.init_angle
     
@@ -56,16 +56,18 @@ class Joint:
     
     def speed_move(self, angle, speed):
         # increment angle over period of time
-        while self.angle != angle:
-            logging.debug(f"current angle: {self.angle}")
-            if abs(self.angle - angle) < self._valid_diff:
+        angle_val = self.angle
+        while angle_val != angle:
+            logging.debug(f"current angle: {angle_val}")
+            if abs(angle_val - angle) < self._increment_angle + self._valid_diff:
                 self.angle = angle
                 break
-            if self.angle > angle:
+            if angle_val > angle:
                 self.angle -= self._increment_angle
+                angle_val -= self._increment_angle
             else:
                 self.angle += self._increment_angle
-            time.sleep(0.005/speed)
+                angle_val += self._increment_angle
 
     def move(self, angle, speed=None):
         """Move robot arm joint.
@@ -111,7 +113,7 @@ class RobotArm:
         self.kit = ServoKit(channels=16)
         self.servo = self.kit.servo
         self.base = Joint(self.servo[0], speed, init_angle=90)
-        self.shoulder = Joint(self.servo[1], speed, init_angle=90, max=90)
+        self.shoulder = Joint(self.servo[1], speed, init_angle=90, min=90)
         self.elbow = Joint(self.servo[2], speed, init_angle=180)
         self.wrist = Joint(self.servo[3], speed, init_angle=180) # Flip rotation
         self.claw = Joint(self.servo[4], speed, init_angle=90, min=90)
