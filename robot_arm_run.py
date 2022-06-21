@@ -71,12 +71,12 @@ def run():
             logging.debug(f"event: {event}, values {values}")
             if event in ("sleep_btn", "quit_btn"):
                 robot.sleep()
-                update_slider(base_col, robot.base.angle)
-                update_slider(shoulder_col, robot.shoulder.angle)
-                update_slider(elbow_col, robot.elbow.angle)
-                update_slider(wrist_col, robot.wrist.angle)
-                update_slider(wrist_rot_col, robot.wrist_rotate.angle)
-                update_slider(claw, robot.claw.angle)
+                update_slider(base_col, robot.base.init_angle)
+                update_slider(shoulder_col, robot.shoulder.init_angle)
+                update_slider(elbow_col, robot.elbow.init_angle)
+                update_slider(wrist_col, robot.wrist.init_angle)
+                update_slider(wrist_rot_col, robot.wrist_rotate.init_angle)
+                update_slider(claw, robot.claw.init_angle)
             if event == "sleep_btn":
                 continue
             if event in (sg.WINDOW_CLOSED, "quit_btn"):
@@ -88,6 +88,7 @@ def run():
             logging.error(f"Failed to read event: {e}")
 
     window.close()
+    logging.info("Done!")
 
 
 if __name__ == "__main__":

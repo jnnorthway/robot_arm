@@ -2,7 +2,7 @@
 import os
 import time
 import logging
-from threading import Thread
+from threading import Thread, Lock
 
 
 logging.basicConfig()
@@ -32,9 +32,10 @@ class Joint:
         self.speed = speed
         self.min = min
         self.max = max
-        self._increment_angle = 3
+        self._increment_angle = self.speed
         self._valid_diff = 0.5
         self.servo.angle = self.init_angle
+        self.lock = Lock()
     
     @property
     def angle(self):
@@ -54,11 +55,13 @@ class Joint:
             new_angle = self.max
         self.servo.angle = new_angle
     
-    def speed_move(self, angle, speed):
+    def speed_move(self, angle):
         # increment angle over period of time
+        self.lock.acquire()
         angle_val = self.angle
         while angle_val != angle:
             logging.debug(f"current angle: {angle_val}")
+            time.sleep(0.2)
             if abs(angle_val - angle) < self._increment_angle + self._valid_diff:
                 self.angle = angle
                 break
@@ -68,8 +71,9 @@ class Joint:
             else:
                 self.angle += self._increment_angle
                 angle_val += self._increment_angle
+        self.lock.release()
 
-    def move(self, angle, speed=None):
+    def move(self, angle):
         """Move robot arm joint.
 
         angle (float): Angle to move joint to
@@ -77,16 +81,14 @@ class Joint:
         """
         if abs(self.angle - angle) < self._valid_diff:
             return
-        if speed is None:
-            speed = self.speed
         # handle speed out of range
-        if speed > 10:
+        if self.speed > 10:
             logging.warning("speed must be in range 1 - 10")
-            speed = 10
-        if speed < 1:
+            self.speed = 10
+        if self.speed < 1:
             logging.warning("speed must be in range 1 - 10")
-            speed = 1
-        logging.info(f"Moving {self} from {self.angle} to {angle} with speed {speed}")
+            self.speed = 1
+        logging.info(f"Moving {self} from {self.angle} to {angle} with speed {self.speed}")
         # check if angle is out of range for joint
         if angle < self.min:
             logging.warning(f"Angle less than min selected, min: {self.min}, angle: {angle}")
@@ -95,10 +97,10 @@ class Joint:
             logging.warning(f"Angle greater than max selected, max: {self.max}, angle: {angle}")
             angle = self.max
         # speed of 10 should move instantly
-        if speed == 10:
+        if self.speed == 10:
             self.angle = angle
             return
-        Thread(target=self.speed_move, args=(angle,speed,)).start()
+        Thread(target=self.speed_move, args=(angle,)).start()
 
     def sleep(self):
         """Returns joint to initial position."""
@@ -108,16 +110,16 @@ class Joint:
 class RobotArm:
     """Robot arm class."""
 
-    def __init__(self, speed=9):
+    def __init__(self):
         """Initialize robot arm."""
         self.kit = ServoKit(channels=16)
         self.servo = self.kit.servo
-        self.base = Joint(self.servo[0], speed, init_angle=90)
-        self.shoulder = Joint(self.servo[1], speed, init_angle=90, min=90)
-        self.elbow = Joint(self.servo[2], speed, init_angle=180)
-        self.wrist = Joint(self.servo[3], speed, init_angle=180) # Flip rotation
-        self.claw = Joint(self.servo[4], speed, init_angle=90, min=90)
-        self.wrist_rotate = Joint(self.servo[5], speed, init_angle=0)
+        self.base = Joint(self.servo[0], 3, init_angle=90)
+        self.shoulder = Joint(self.servo[1], 2, init_angle=90, min=90)
+        self.elbow = Joint(self.servo[2], 3, init_angle=180)
+        self.wrist = Joint(self.servo[3], 3, init_angle=180) # Flip rotation
+        self.claw = Joint(self.servo[4], 3, init_angle=90, min=90)
+        self.wrist_rotate = Joint(self.servo[5], 3, init_angle=0)
         self.joints = {
             "base": self.base,
             "shoulder": self.shoulder,
