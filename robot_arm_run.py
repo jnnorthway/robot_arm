@@ -16,7 +16,7 @@ def get_joint_col(name, joint, reverse=False):
     )
 
 
-def do_move(robot, values):
+def do_move(robot, values, prev_values=None):
     """Move joint based on dictionary values."""
     base_val = float(values.get("base", None))
     shoulder_val = float(values.get("shoulder", None))
@@ -24,12 +24,34 @@ def do_move(robot, values):
     wrist_val = float(values.get("wrist", None))
     wrist_rot_val = float(values.get("wrist_rotation", None))
     claw_val = float(values.get("claw", None))
-    robot.base.move(base_val)
-    robot.shoulder.move(shoulder_val)
-    robot.elbow.move(elbow_val)
-    robot.wrist.move(wrist_val)
-    robot.wrist_rotate.move(wrist_rot_val)
-    robot.claw.move(claw_val)
+    if not prev_values:
+        prev_values = {
+            "base": -1,
+            "shoulder": -1,
+            "elbow": -1,
+            "wrist": -1,
+            "wrist_rotation": -1,
+            "claw": -1,
+        }
+    if prev_values["base"] != base_val:
+        prev_values["base"] = base_val
+        robot.base.move(base_val)
+    if prev_values["shoulder"] != shoulder_val:
+        prev_values["shoulder"] = shoulder_val
+        robot.shoulder.move(shoulder_val)
+    if prev_values["elbow"] != elbow_val:
+        prev_values["elbow"] = elbow_val
+        robot.elbow.move(elbow_val)
+    if prev_values["wrist"] != wrist_val:
+        prev_values["wrist"] = wrist_val
+        robot.wrist.move(wrist_val)
+    if prev_values["wrist_rotation"] != wrist_rot_val:
+        prev_values["wrist_rotation"] = wrist_rot_val
+        robot.wrist_rotate.move(wrist_rot_val)
+    if prev_values["claw"] != claw_val:
+        prev_values["claw"] = claw_val
+        robot.claw.move(claw_val)
+    return prev_values
 
 
 def update_slider(col, val):
@@ -64,6 +86,7 @@ def run():
         [base_col, shoulder_col, elbow_col],
         [sleep_btn, quit_btn]
     ]
+    prev_values = None
     window = sg.Window("Robot Arm Controller", layout, web_port=30000)
     while True:
         try:
@@ -81,7 +104,7 @@ def run():
                 continue
             if event in (sg.WINDOW_CLOSED, "quit_btn"):
                 break
-            do_move(robot, values)
+            prev_values = do_move(robot, values, prev_values)
         except KeyboardInterrupt:
             break
         except Exception as e:

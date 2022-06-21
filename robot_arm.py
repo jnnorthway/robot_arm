@@ -18,7 +18,7 @@ else:
 class Joint:
     """Robot arm joint."""
 
-    def __init__(self, servo, speed=9, init_angle=90, min=0, max=180):
+    def __init__(self, servo, speed=3, init_angle=90, min=0, max=180):
         """Robot arm joint init.
 
         servo (adafruit_motor.servo.Servo): Servo class for robot arm joint
